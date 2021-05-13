@@ -23,15 +23,6 @@ func TestRun_versionFlag(t *testing.T) {
 	}
 }
 
-func TestRun_aFlag(t *testing.T) {
-	outStream, errStream := new(bytes.Buffer), new(bytes.Buffer)
-	cli := &CLI{outStream: outStream, errStream: errStream}
-	args := strings.Split("./dic -a", " ")
-
-	status := cli.Run(args)
-	_ = status
-}
-
 func TestRun_sFlag(t *testing.T) {
 	outStream, errStream := new(bytes.Buffer), new(bytes.Buffer)
 	cli := &CLI{outStream: outStream, errStream: errStream}
