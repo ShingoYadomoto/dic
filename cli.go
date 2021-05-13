@@ -33,9 +33,9 @@ func (cli *CLI) Run(args []string) int {
 	flags := flag.NewFlagSet(Name, flag.ContinueOnError)
 	flags.SetOutput(cli.errStream)
 
-	flags.BoolVar(&s, "s", false, "")
-	flags.BoolVar(&e, "e", false, "")
-	flags.BoolVar(&c, "c", false, "")
+	flags.BoolVar(&s, "s", false, "Match specification: STARTWITH (HEADWORD)")
+	flags.BoolVar(&e, "e", false, "Match specification: ENDWITH   (HEADWORD)")
+	flags.BoolVar(&c, "c", false, "Match specification: CONTAIN   (ANYWHERE)")
 
 	flags.BoolVar(&version, "version", false, "Print version information and quit.")
 
