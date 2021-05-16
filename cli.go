@@ -50,11 +50,54 @@ func (cli *CLI) Run(args []string) int {
 		return ExitCodeOK
 	}
 
-	_ = s
+	err := cli.validateFlags(s, e, c)
+	if err != nil {
+		fmt.Fprint(cli.errStream, err.Error())
+		return ExitCodeError
+	}
 
-	_ = e
+	translator := NewEdictJ2E(
+		EdictJ2EMatchScope(s, e, c),
+	)
 
-	_ = c
+	//buf, err := ioutil.ReadAll(os.Stdin)
+	//if err != nil {
+	//	fmt.Fprint(cli.errStream, err.Error())
+	//	return ExitCodeError
+	//}
+	buf := []byte("日本")
+
+	out, err := cli.callTranslate(translator, string(buf))
+	if err != nil {
+		fmt.Fprint(cli.errStream, err.Error())
+		return ExitCodeError
+	}
+
+	fmt.Fprint(cli.outStream, out)
 
 	return ExitCodeOK
+}
+
+func (cli *CLI) validateFlags(s, e, c bool) error {
+	var trueCount int
+
+	if s {
+		trueCount++
+	}
+	if e {
+		trueCount++
+	}
+	if c {
+		trueCount++
+	}
+
+	if trueCount > 1 {
+		return fmt.Errorf("match flag(-s, -e, -c) counts must be 0 or 1")
+	}
+
+	return nil
+}
+
+func (cli *CLI) callTranslate(t Translator, origin string) (string, error) {
+	return t.Translate(origin)
 }
