@@ -1,7 +1,7 @@
 # dic
-translate Japanese 2 English using EDICT
+translate Japanese 2 English using EDICT written in only Go standard Library.
 
-Usage:
+## Usage
 ```bash
 Usage of dic:
   -c	Match specification: CONTAIN   (ANYWHERE)
@@ -15,6 +15,8 @@ Usage of dic:
     	Word translated by
 ```
 
+
+
 Hit On Start With Headword
 ![startwith headword image](images/startwith_headword.png)
 
@@ -23,3 +25,13 @@ Hit On End with Headword
 
 Hit On Contain Anywhere
 ![contain anywhere image](images/contain_anywhere.png)
+
+
+## Installation
+
+```bash
+$ git clone https://github.com/ShingoYadomoto/dic.git
+$ cd dic
+$ go build
+$ ./dic -w 経済
+```
