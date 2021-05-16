@@ -52,15 +52,13 @@ func (cli *CLI) Run(args []string) int {
 	flags.BoolVar(&s, "s", false, "Match specification: STARTWITH (HEADWORD)")
 	flags.BoolVar(&e, "e", false, "Match specification: ENDWITH   (HEADWORD)")
 	flags.BoolVar(&c, "c", false, "Match specification: CONTAIN   (ANYWHERE)")
-
 	flags.IntVar(&p, "p", 0, "Max result count(default: 3)")
-
 	flags.StringVar(&w, "w", "", "Word translated by")
-
 	flags.BoolVar(&version, "version", false, "Print version information and quit.")
 
 	// Parse commandline flag
-	if err := flags.Parse(args[1:]); err != nil {
+	err := flags.Parse(args[1:])
+	if err != nil {
 		return ExitCodeError
 	}
 
@@ -71,39 +69,7 @@ func (cli *CLI) Run(args []string) int {
 	}
 
 	// Validate Flags
-	err := cli.validateFlags(s, e, c)
-	if err != nil {
-		fmt.Fprint(cli.errStream, err.Error())
-		return ExitCodeError
-	}
-
-	// New Translator
-	opts := []EdictJ2EOption{
-		EdictJ2EMatchScope(s, e, c),
-	}
-	if p != 0 {
-		opts = append(opts, EdictJ2EPageSize(p))
-	}
-	translator := NewEdictJ2E(opts...)
-
-	// Call Translate
-	resultList, err := cli.callTranslate(translator, w)
-	if err != nil {
-		fmt.Fprint(cli.errStream, err.Error())
-		return ExitCodeError
-	}
-
-	// Echo Results
-	for _, result := range resultList {
-		fmt.Fprintf(cli.outStream, "%s: %s\n", result.Origin, cyan(result.Dist))
-	}
-
-	return ExitCodeOK
-}
-
-func (cli *CLI) validateFlags(s, e, c bool) error {
 	var trueCount int
-
 	if s {
 		trueCount++
 	}
@@ -113,14 +79,43 @@ func (cli *CLI) validateFlags(s, e, c bool) error {
 	if c {
 		trueCount++
 	}
-
 	if trueCount > 1 {
-		return fmt.Errorf("match flag(-s, -e, -c) counts must be 0 or 1")
+		fmt.Fprint(cli.errStream, "match flag(-s, -e, -c) counts must be 0 or 1")
+		return ExitCodeError
+	}
+
+	// Run
+	err = cli.run(s, e, c, p, w)
+	if err != nil {
+		fmt.Fprint(cli.errStream, err.Error())
+		return ExitCodeError
+	}
+
+	return ExitCodeOK
+}
+
+func (cli *CLI) run(s, e, c bool, p int, w string) error {
+	// New Translator
+	var translator Translator
+
+	opts := []EdictJ2EOption{
+		EdictJ2EMatchScope(s, e, c),
+	}
+	if p != 0 {
+		opts = append(opts, EdictJ2EPageSize(p))
+	}
+	translator = NewEdictJ2E(opts...)
+
+	// Call Translate
+	resultList, err := translator.Translate(w)
+	if err != nil {
+		return err
+	}
+
+	// Echo Results
+	for _, result := range resultList {
+		fmt.Fprintf(cli.outStream, "%s: %s\n", result.Origin, cyan(result.Dist))
 	}
 
 	return nil
-}
-
-func (cli *CLI) callTranslate(t Translator, origin string) ([]Result, error) {
-	return t.Translate(origin)
 }
