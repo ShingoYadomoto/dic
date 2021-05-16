@@ -14,7 +14,7 @@ type (
 
 		// ErrorMessage  string `xml:"ErrorMessage"`
 		// TotalHitCount int    `xml:"TotalHitCount"`
-		// ItemCount int `xml:"ItemCount"`
+		// ItemCount     int    `xml:"ItemCount"`
 		TitleList struct {
 			DicItemTitleList []struct {
 				ItemID string `xml:"ItemID"`
