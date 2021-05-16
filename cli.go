@@ -19,12 +19,28 @@ type CLI struct {
 	outStream, errStream io.Writer
 }
 
+func color(t string, code int) string {
+	return fmt.Sprintf("\x1b[%dm%s\x1b[0m", code, t)
+}
+
+func red(t string) string {
+	return color(t, 31)
+}
+
+func cyan(t string) string {
+	return color(t, 36)
+}
+
 // Run invokes the CLI with the given arguments.
 func (cli *CLI) Run(args []string) int {
 	var (
 		s bool
 		e bool
 		c bool
+
+		p int
+
+		w string
 
 		version bool
 	)
@@ -36,6 +52,10 @@ func (cli *CLI) Run(args []string) int {
 	flags.BoolVar(&s, "s", false, "Match specification: STARTWITH (HEADWORD)")
 	flags.BoolVar(&e, "e", false, "Match specification: ENDWITH   (HEADWORD)")
 	flags.BoolVar(&c, "c", false, "Match specification: CONTAIN   (ANYWHERE)")
+
+	flags.IntVar(&p, "p", 0, "Max result count(default: 3)")
+
+	flags.StringVar(&w, "w", "", "Word translated by")
 
 	flags.BoolVar(&version, "version", false, "Print version information and quit.")
 
@@ -50,30 +70,33 @@ func (cli *CLI) Run(args []string) int {
 		return ExitCodeOK
 	}
 
+	// Validate Flags
 	err := cli.validateFlags(s, e, c)
 	if err != nil {
 		fmt.Fprint(cli.errStream, err.Error())
 		return ExitCodeError
 	}
 
-	translator := NewEdictJ2E(
+	// New Translator
+	opts := []EdictJ2EOption{
 		EdictJ2EMatchScope(s, e, c),
-	)
+	}
+	if p != 0 {
+		opts = append(opts, EdictJ2EPageSize(p))
+	}
+	translator := NewEdictJ2E(opts...)
 
-	//buf, err := ioutil.ReadAll(os.Stdin)
-	//if err != nil {
-	//	fmt.Fprint(cli.errStream, err.Error())
-	//	return ExitCodeError
-	//}
-	buf := []byte("日本")
-
-	out, err := cli.callTranslate(translator, string(buf))
+	// Call Translate
+	resultList, err := cli.callTranslate(translator, w)
 	if err != nil {
 		fmt.Fprint(cli.errStream, err.Error())
 		return ExitCodeError
 	}
 
-	fmt.Fprint(cli.outStream, out)
+	// Echo Results
+	for _, result := range resultList {
+		fmt.Fprintf(cli.outStream, "%s: %s\n", result.Origin, cyan(result.Dist))
+	}
 
 	return ExitCodeOK
 }
@@ -98,6 +121,6 @@ func (cli *CLI) validateFlags(s, e, c bool) error {
 	return nil
 }
 
-func (cli *CLI) callTranslate(t Translator, origin string) (string, error) {
+func (cli *CLI) callTranslate(t Translator, origin string) ([]Result, error) {
 	return t.Translate(origin)
 }
